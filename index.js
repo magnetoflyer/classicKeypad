@@ -1,7 +1,8 @@
-const THRESHOLD_CHAR = 500;// delay limit for contiuous keyupress of same key
-const THRESHOLD_NUM = 600; // delay limit for hold keypress
+const THRESHOLD_CHAR = 500;  // delay for continuous press detection of same key
+const THRESHOLD_NUM = 600;   // time delay for hold detection 
 
-// map for each key and corresponding alphabetical/symbol sign
+
+// mapping each key value to its corresponding characters 
 const  keyMap = {
     '1': ".,!",
     '2': "abc",
@@ -12,27 +13,29 @@ const  keyMap = {
     '7': "pqrs",
     '8': "tuv",
     '9': "wxyz",
-    '': "",
+    '*': "*",
     '0': "0",
     '#': '#',
 };
 
-const userKeyPresses = {}
 
-let lastCharacter = 0; // variable to check for last character pressed
-let lastDown = 0;   // varialble to track time elasped since the last key pressed
+// a count variable is required to store the no. of times a key is pressed in continuation
+const userKeyPresses = {}   // map to store count
+
+let lastCharacter = 0; // these variables are used to keep track of the mouse button presses
+let lastDown = 0;
 
 let lastUp = 0;
 let currentUp = 0;
 let currentDown = 0;
 
-let capsified = false; // variable to hold if the caps lock is on/off
+let capsified = false;
 
 
-// function for initializing the mapped value of each key and no. time of same key pressed count
+// initializing count variable for each character button
 var initialize = (function() {
     var initialized = false;
-    const characters = [0,1,2,3,4,5,6,7,8,9,'#','*', 12, 13,14]
+    const characters = [0,1,2,3,4,5,6,7,8,9,'#','*', 12, 13,14];
     return function() {
         if (!initialized) {
             initialized = true;
@@ -45,10 +48,10 @@ var initialize = (function() {
     };
 })();
 
-initialize();  // function call 
+initialize();  //calling the function 
 
 
-// function to return character to be printed based on the time elasped since last pressed
+// function to count the no. times one key is pressed and return out corresponding character
 const handlePress = (character) => {
     if(character === lastCharacter) {;
         const diff = currentDown - lastUp
@@ -65,34 +68,39 @@ const handlePress = (character) => {
 }
 
 
-//function to check time of mousekey down event
+// function to keep track of last time when mouse left button was down
 const handleMouseDown = () => {
     lastDown = currentDown;
     currentDown = Date.now();
 }
 
 
-// function to check time of mousekey up event
+
+// function to keep track of last time when mouse left button was released
 const handleMouseUp = () => {
     lastUp = currentUp;
     currentUp = Date.now();
 }
 
-// this function is required to map the value of each key in html to its corresponding character
+
+//  this function is required because ".attr(value)" function would only recieve numerical value and we need special characters as well
+// thus it maps the value of each button to its character if needed
 const characterFilter = (character) => {
     if(Number(character)<=9) return character;
     else {
         switch(character) {
-            case 10: 
+            case '10': 
                 return '*';
-            case 11: 
-                return '#';
+            case '11': 
+                return '#'
             default:
                 return character
         }
     }
 }
 
+
+// this method handles the press of backspace and capslock and change the required varialbles
 const handleSpecialKeyPreseses = (character) => {
     switch (character) {
         case 12: 
@@ -104,7 +112,7 @@ const handleSpecialKeyPreseses = (character) => {
 }
 
 
-// to convert characters in Capital if capsified variable is true
+// finction to capitalize the character capslock is ON
 const capsify = (character) => {
     if(character >= 'a' && character<='z') {
         return character.toUpperCase();
@@ -113,29 +121,28 @@ const capsify = (character) => {
 }
 
 
-//main interactice funtion to write on the text box of web page
+// main function to handle character and return out string to be shown on app's text area
 $(function(){
 	var $write = $('#write');
 
     $('#keyboard li').click(function(){
-        const character = characterFilter($(this).attr('value'));// recieve the value of each button pressed and get its corresponding character
 
+        const character = characterFilter($(this).attr('value'));
 
-        // based on the character perform the required action
         switch (character) {
-            case 12:// case for capslock key
+            case '12': // case to deal with capslock
                 capsified = !capsified;
-                (capsified )? $(this).addClass('selected'): $(this).removeClass('selected'); // adding an extra class to the for UI effect
+                (capsified )? $(this).addClass('selected'): $(this).removeClass('selected'); // adding extra class to show ON effect using CSS
                 return;
-            case 13:// case for backspace key
+            case '13': // case to deal with backspace
                 let presentText = $write.html(); 
-                $write.html(presentText.slice(0, presentText.length-1));
+                $write.html(presentText.slice(0, presentText.length-1)); // trimming out the last character 
                 return;
-            case 14: // case for spacebar key
+            case '14': // case for spacebar key
                 $write.html($write.html() + " ");
                 return;
-            default: // for all other keys
-                const durationPressed = currentUp - currentDown;
+            default:
+                const durationPressed = currentUp - currentDown;  // checking the duration of keypress
                 let updatedCharacter = (durationPressed >= THRESHOLD_NUM) ? 
                 character : handlePress(character);
                 
@@ -149,7 +156,7 @@ $(function(){
                 } else {
                     $write.html($write.html() + updatedCharacter);
                 }
-                lastCharacter = character;// keep track of the last character pressed
+                lastCharacter = character;
         }
     });
 });
